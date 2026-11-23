@@ -1,0 +1,36 @@
+services:
+  mongo:
+    image: mongo:7
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: campus
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:?Set MONGO_PASSWORD in .env}
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: [CMD-SHELL, 'mongosh --quiet --username campus --password "$${MONGO_INITDB_ROOT_PASSWORD}" --authenticationDatabase admin --eval "db.adminCommand({ping:1})"']
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    restart: unless-stopped
+  app:
+    build: .
+    environment:
+      NODE_ENV: development
+      MONGODB_URI: mongodb://campus:${MONGO_PASSWORD}@mongo:27017/campus_connect?authSource=admin
+      SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET in .env}
+      UPLOAD_DIR: /app/uploads
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@college.test}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
+      DEMO_PASSWORD: ${DEMO_PASSWORD:-}
+    depends_on:
+      mongo:
+        condition: service_healthy
+    ports:
+      - '127.0.0.1:3000:3000'
+    volumes:
+      - uploads:/app/uploads
+    init: true
+    restart: unless-stopped
+volumes:
+  mongo-data:
+  uploads:

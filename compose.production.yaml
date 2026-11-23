@@ -1,0 +1,23 @@
+services:
+  app:
+    environment:
+      NODE_ENV: production
+      TRUST_PROXY: '1'
+      DEMO_PASSWORD: ''
+  proxy:
+    image: caddy:2
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN to your public hostname}
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - app
+    restart: unless-stopped
+volumes:
+  caddy-data:
+  caddy-config:
